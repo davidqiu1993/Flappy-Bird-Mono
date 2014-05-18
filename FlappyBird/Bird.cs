@@ -21,7 +21,7 @@ namespace FlappyBird
         /// <summary>
         /// Get width of the bird in pixel.
         /// </summary>
-        public int Width
+        static public int Width
         {
             get { return 80; }
         }
@@ -29,7 +29,7 @@ namespace FlappyBird
         /// <summary>
         /// Get height of the bird in pixel.
         /// </summary>
-        public int Height
+        static public int Height
         {
             get { return 60; }
         }

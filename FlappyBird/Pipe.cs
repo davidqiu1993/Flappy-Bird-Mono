@@ -36,9 +36,9 @@ namespace FlappyBird
         /// <summary>
         /// Get the width of the pipe in pixel.
         /// </summary>
-        public int Width
+        static public int Width
         {
-            get { return 75; }
+            get { return 70; }
         }
 
         /// <summary>
@@ -53,9 +53,9 @@ namespace FlappyBird
         /// <summary>
         /// Get the opening size of the pipe.
         /// </summary>
-        public int OpeningSize
+        static public int OpeningSize
         {
-            get { return 80; }
+            get { return 135; }
         }
 
         /// <summary>
@@ -122,6 +122,10 @@ namespace FlappyBird
         {
             base.Initialize();
 
+            // Initialize the default parameters
+            _PositionX = 0;
+            _OpeningAltitude = OpeningMinAltitude;
+
             // Load the pipe textures
             _Texture_Body = base.Game.Content.Load<Texture2D>("pipe_body");
             _Texture_DownwardEnd = base.Game.Content.Load<Texture2D>("pipe_end_downward");
@@ -168,7 +172,7 @@ namespace FlappyBird
 
             // Draw the upper end which is downward
             spriteBatch.Draw(
-                _Texture_DownwardEnd,
+                _Texture_UpwardEnd,
                 new Rectangle(_PositionX - Width / 2, ((FlappyBird)base.Game).ScreenHeight - _OpeningAltitude + OpeningSize / 2, Width, _Texture_End_Height),
                 new Rectangle(0, 0, Width, _Texture_End_Height),
                 Color.White);

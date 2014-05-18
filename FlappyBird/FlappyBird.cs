@@ -16,23 +16,72 @@ namespace FlappyBird
     {
         protected GraphicsDeviceManager _Graphics = null;
         protected SpriteBatch _SpriteBatch = null;
+        protected Random _Random = null;
 
         protected int _Score = 0;
 
-        protected int _Gravity = 1000;
+        protected int _Gravity = 1500;
 
         protected Bird _Bird = null;
         protected int _BirdVerticalSpeed = 0;
 
         protected List<Pipe> _Pipes = null;
-        
+        protected bool _PipesMaintaining = false;
+        protected int _PipesDistance = 180;
+        protected int _PipesSpeed = 160;
+
 
         /// <summary>
-        /// Fill the pipe list with enough pipes.
+        /// Fill the pipe list with enough pipes and remove outdated pipes.
         /// </summary>
-        protected void _FillPipes()
+        protected void _MaintainPipes()
         {
-            ;
+
+            if (!_PipesMaintaining)
+            {
+                // Set the maintaining state
+                _PipesMaintaining = true;
+
+                int countReadyPipes = 0;
+
+                for (int i = 0; i < _Pipes.Count; ++i)
+                {
+                    // Remove the outdated pipes
+                    if (_Pipes[i].PositionX < 0 - Pipe.Width)
+                    {
+                        _Pipes.Remove(_Pipes[i]);
+                        continue;
+                    }
+
+                    // Count the ready pipes
+                    if (_Pipes[i].PositionX > ScreenWidth + Pipe.Width) ++countReadyPipes;
+                }
+
+                // Fill the list with enough ready pipes
+                while (countReadyPipes < 3)
+                {
+                    // Add the first pipe
+                    if (_Pipes.Count == 0)
+                    {
+                        _Pipes.Add(new Pipe(this, 0));
+                        _Pipes[0].Initialize();
+                        _Pipes[0].PositionX = ScreenWidth + Pipe.Width;
+                        _Pipes[0].OpeningAltitude = _Random.Next(_Pipes[0].OpeningMinAltitude, _Pipes[0].OpeningMaxAltitude);
+                        ++countReadyPipes;
+                    }
+
+                    // Add the other pipes
+                    Pipe generatedPipe = new Pipe(this, _Pipes[_Pipes.Count - 1].PipeNumber + 1);
+                    generatedPipe.Initialize();
+                    generatedPipe.PositionX = _Pipes[_Pipes.Count - 1].PositionX + _PipesDistance + Pipe.Width;
+                    generatedPipe.OpeningAltitude = _Random.Next(generatedPipe.OpeningMinAltitude, generatedPipe.OpeningMaxAltitude);
+                    _Pipes.Add(generatedPipe);
+                    ++countReadyPipes;
+                }
+
+                // Reset the maintaining state
+                _PipesMaintaining = false;
+            }
         }
 
         /// <summary>
@@ -70,8 +119,11 @@ namespace FlappyBird
             // Create a new graphics device manager and set the screen size
             _Graphics = new GraphicsDeviceManager(this);
             _Graphics.IsFullScreen = false;
-            _Graphics.PreferredBackBufferHeight = 600;
-            _Graphics.PreferredBackBufferWidth = 384;
+            _Graphics.PreferredBackBufferHeight = 537;
+            _Graphics.PreferredBackBufferWidth = 378;
+
+            // Create a new randon generator
+            _Random = new Random((int)DateTime.Now.Ticks);
 
             // Set the content root directory
             Content.RootDirectory = "Content";
@@ -97,7 +149,8 @@ namespace FlappyBird
             _Bird.PositionY = _Graphics.PreferredBackBufferHeight / 2;
 
             // Initialize the pipes
-            
+            _PipesMaintaining = false;
+            _MaintainPipes();
         }
 
         /// <summary>
@@ -140,8 +193,23 @@ namespace FlappyBird
             if (Keyboard.GetState().IsKeyDown(Keys.Space)) _BirdVerticalSpeed = 400;
             else _BirdVerticalSpeed += -_Gravity * gameTime.ElapsedGameTime.Milliseconds / 1000;
             _Bird.PositionY += _BirdVerticalSpeed * gameTime.ElapsedGameTime.Milliseconds / 1000;
-            if (_Bird.PositionY < 0) { _Bird.PositionY = 0; _BirdVerticalSpeed = 0; }
-            if (_Bird.PositionY > ScreenHeight) _Bird.PositionY = ScreenHeight;
+            if (_Bird.PositionY < 0)
+            {
+                _Bird.PositionY = 0;
+                _BirdVerticalSpeed = 0;
+            }
+            if (_Bird.PositionY > ScreenHeight)
+            {
+                _Bird.PositionY = ScreenHeight;
+                _BirdVerticalSpeed = 0;
+            }
+
+            // Update the pipe positions and maintain the pipe list
+            foreach (Pipe pipe in _Pipes)
+            {
+                pipe.PositionX -= _PipesSpeed * gameTime.ElapsedGameTime.Milliseconds / 1000;
+            }
+            _MaintainPipes();
         }
 
         /// <summary>
@@ -156,8 +224,14 @@ namespace FlappyBird
             // Draw the base class
             base.Draw(gameTime);
 
-            // Draw the components
+            // Draw the bird
             _Bird.Draw(_SpriteBatch);
+
+            // Draw the pipes
+            foreach (Pipe pipe in _Pipes)
+            {
+                pipe.Draw(_SpriteBatch);
+            }
         }
     }
 }
