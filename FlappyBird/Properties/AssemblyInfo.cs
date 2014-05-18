@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("FlappyBird")]
-[assembly: AssemblyProduct("FlappyBird")]
+[assembly: AssemblyTitle("Flappy Bird Mono")]
+[assembly: AssemblyProduct("Flappy Bird Mono")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyDescription("")]
-[assembly: AssemblyCompany("")]
-[assembly: AssemblyCopyright("Copyright ©  2014")]
+[assembly: AssemblyDescription("Flappy Bird with MonoGame.")]
+[assembly: AssemblyCompany("DavidQiu.com")]
+[assembly: AssemblyCopyright("Copyright © DavidQiu.com 2014")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

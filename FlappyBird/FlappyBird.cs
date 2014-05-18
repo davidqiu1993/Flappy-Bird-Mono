@@ -153,11 +153,17 @@ namespace FlappyBird
         }
 
         /// <summary>
-        /// Check if the bird cross any new pipe and update the score.
+        /// Update the score and check if game over.
         /// </summary>
         protected void _UpdateScore()
         {
-            ;
+            for (int i = 0; i < _Pipes.Count; ++i)
+            {
+                if (_Pipes[i].PositionX < _Bird.PositionX && _Pipes[i].PipeNumber + 1 > _Score)
+                {
+                    _Score = _Pipes[i].PipeNumber + 1;
+                }
+            }
         }
 
 
@@ -275,6 +281,7 @@ namespace FlappyBird
             }
             _MaintainFloors();
 
+
             // Check the game state
             switch(_GameState)
             {
@@ -282,7 +289,20 @@ namespace FlappyBird
                     {
                         if (Keyboard.GetState().IsKeyDown(Keys.Space))
                         {
+                            // Reset the pipes
+                            _Pipes.Clear();
+                            _Pipes.Add(new Pipe(this, 0, Floor.Height));
+                            _Pipes[0].Initialize();
+                            _Pipes[0].PositionX = ScreenWidth + Pipe.Width + 200;
+                            _Pipes[0].OpeningAltitude = _Random.Next(_Pipes[0].OpeningMinAltitude, _Pipes[0].OpeningMaxAltitude);
+
+                            // Reset the score
+                            _Score = 0;
+
+                            // Set the vertical speed of the bird
                             _BirdVerticalSpeed = 400;
+
+                            // Switch the game state
                             _GameState = GameState.Start;
                         }
                         else
