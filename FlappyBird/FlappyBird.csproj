@@ -37,6 +37,7 @@
   <ItemGroup>
     <Compile Include="Bird.cs" />
     <Compile Include="FlappyBird.cs" />
+    <Compile Include="Floor.cs" />
     <Compile Include="Pipe.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -49,10 +50,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Content\background.jpg" />
     <Content Include="Content\bird.png" />
+    <Content Include="Content\floor.png" />
     <Content Include="Content\pipe_body.png" />
     <Content Include="Content\pipe_end_downward.png" />
     <Content Include="Content\pipe_end_upward.png" />
+    <Content Include="Content\ready.png" />
     <Content Include="Icon.ico" />
   </ItemGroup>
   <ItemGroup />

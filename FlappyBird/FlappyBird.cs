@@ -10,25 +10,42 @@ using Microsoft.Xna.Framework.GamerServices;
 namespace FlappyBird
 {
     /// <summary>
+    /// The state of the game.
+    /// </summary>
+    public enum GameState 
+    {
+        Ready = 0,
+        Start = 1,
+        GameOver = 2
+    }
+
+
+    /// <summary>
     /// This is the main type for your game
     /// </summary>
     public class FlappyBird : Game
     {
         protected GraphicsDeviceManager _Graphics = null;
         protected SpriteBatch _SpriteBatch = null;
+        protected Texture2D _Background = null;
+        protected Texture2D _ReadyCover = null;
         protected Random _Random = null;
 
         protected int _Score = 0;
+        protected GameState _GameState = GameState.Ready;
 
         protected int _Gravity = 1500;
+        protected int _SceneSpeed = 160;
 
         protected Bird _Bird = null;
         protected int _BirdVerticalSpeed = 0;
 
         protected List<Pipe> _Pipes = null;
         protected bool _PipesMaintaining = false;
-        protected int _PipesDistance = 180;
-        protected int _PipesSpeed = 160;
+        protected int _PipesDistance = 135;
+
+        protected List<Floor> _Floors = null;
+        protected bool _FloorsMaintaining = false;
 
 
         /// <summary>
@@ -36,7 +53,6 @@ namespace FlappyBird
         /// </summary>
         protected void _MaintainPipes()
         {
-
             if (!_PipesMaintaining)
             {
                 // Set the maintaining state
@@ -63,7 +79,7 @@ namespace FlappyBird
                     // Add the first pipe
                     if (_Pipes.Count == 0)
                     {
-                        _Pipes.Add(new Pipe(this, 0));
+                        _Pipes.Add(new Pipe(this, 0, Floor.Height));
                         _Pipes[0].Initialize();
                         _Pipes[0].PositionX = ScreenWidth + Pipe.Width;
                         _Pipes[0].OpeningAltitude = _Random.Next(_Pipes[0].OpeningMinAltitude, _Pipes[0].OpeningMaxAltitude);
@@ -71,7 +87,7 @@ namespace FlappyBird
                     }
 
                     // Add the other pipes
-                    Pipe generatedPipe = new Pipe(this, _Pipes[_Pipes.Count - 1].PipeNumber + 1);
+                    Pipe generatedPipe = new Pipe(this, _Pipes[_Pipes.Count - 1].PipeNumber + 1, Floor.Height);
                     generatedPipe.Initialize();
                     generatedPipe.PositionX = _Pipes[_Pipes.Count - 1].PositionX + _PipesDistance + Pipe.Width;
                     generatedPipe.OpeningAltitude = _Random.Next(generatedPipe.OpeningMinAltitude, generatedPipe.OpeningMaxAltitude);
@@ -81,6 +97,58 @@ namespace FlappyBird
 
                 // Reset the maintaining state
                 _PipesMaintaining = false;
+            }
+        }
+
+        /// <summary>
+        /// Fill the floor list with enough floors and remove outdated floors.
+        /// </summary>
+        protected void _MaintainFloors()
+        {
+            if (!_FloorsMaintaining)
+            {
+                // Set the maintaining state
+                _FloorsMaintaining = true;
+
+                int countReadyFloors = 0;
+
+                for (int i = 0; i < _Floors.Count; ++i)
+                {
+                    // Remove the outdated floors
+                    if (_Floors[i].PositionX < 0 - Floor.Width)
+                    {
+                        _Floors.Remove(_Floors[i]);
+                        continue;
+                    }
+
+                    // Count the ready floors
+                    if (_Floors[i].PositionX > ScreenWidth + Floor.Width) ++countReadyFloors;
+                }
+
+                // Fill the list with enough ready floors
+                while (countReadyFloors < 3)
+                {
+                    // Add the first floor
+                    if (_Floors.Count == 0)
+                    {
+                        _Floors.Add(new Floor(this));
+                        _Floors[0].Initialize();
+                        _Floors[0].PositionX = 0;
+                        _Floors[0].PositionY = ScreenHeight - Floor.Height;
+                        ++countReadyFloors;
+                    }
+
+                    // Add the other floors
+                    Floor generatedFloor = new Floor(this);
+                    generatedFloor.Initialize();
+                    generatedFloor.PositionX = _Floors[_Floors.Count - 1].PositionX + Floor.Width;
+                    generatedFloor.PositionY = ScreenHeight - Floor.Height;
+                    _Floors.Add(generatedFloor);
+                    ++countReadyFloors;
+                }
+
+                // Reset the maintaining state
+                _FloorsMaintaining = false;
             }
         }
 
@@ -131,6 +199,7 @@ namespace FlappyBird
             // Create game components
             _Bird = new Bird(this);
             _Pipes = new List<Pipe>(8);
+            _Floors = new List<Floor>(8);
         }
 
         /// <summary>
@@ -148,9 +217,15 @@ namespace FlappyBird
             _Bird.PositionX = _Graphics.PreferredBackBufferWidth / 3;
             _Bird.PositionY = _Graphics.PreferredBackBufferHeight / 2;
 
-            // Initialize the pipes
+            // Initialize the pipe maintaining state
             _PipesMaintaining = false;
-            _MaintainPipes();
+            
+            // Initialize the floors
+            _FloorsMaintaining = false;
+            _MaintainFloors();
+
+            // Initialize the game state
+            _GameState = GameState.Ready;
         }
 
         /// <summary>
@@ -161,6 +236,10 @@ namespace FlappyBird
         {
             // Create a new SpriteBatch, which can be used to draw textures.
             _SpriteBatch = new SpriteBatch(GraphicsDevice);
+
+            // Load the textures of the main scene
+            _Background = this.Content.Load<Texture2D>("background");
+            _ReadyCover = this.Content.Load<Texture2D>("ready");
         }
 
         /// <summary>
@@ -189,27 +268,63 @@ namespace FlappyBird
             // Update game components
             _Bird.Update(gameTime);
 
-            // Update the motion of the bird
-            if (Keyboard.GetState().IsKeyDown(Keys.Space)) _BirdVerticalSpeed = 400;
-            else _BirdVerticalSpeed += -_Gravity * gameTime.ElapsedGameTime.Milliseconds / 1000;
-            _Bird.PositionY += _BirdVerticalSpeed * gameTime.ElapsedGameTime.Milliseconds / 1000;
-            if (_Bird.PositionY < 0)
+            // Update the floor positions and maintain the floor list
+            foreach (Floor floor in _Floors)
             {
-                _Bird.PositionY = 0;
-                _BirdVerticalSpeed = 0;
+                floor.PositionX -= _SceneSpeed * gameTime.ElapsedGameTime.Milliseconds / 1000;
             }
-            if (_Bird.PositionY > ScreenHeight)
-            {
-                _Bird.PositionY = ScreenHeight;
-                _BirdVerticalSpeed = 0;
-            }
+            _MaintainFloors();
 
-            // Update the pipe positions and maintain the pipe list
-            foreach (Pipe pipe in _Pipes)
+            // Check the game state
+            switch(_GameState)
             {
-                pipe.PositionX -= _PipesSpeed * gameTime.ElapsedGameTime.Milliseconds / 1000;
+                case GameState.Ready:
+                    {
+                        if (Keyboard.GetState().IsKeyDown(Keys.Space))
+                        {
+                            _BirdVerticalSpeed = 400;
+                            _GameState = GameState.Start;
+                        }
+                        else
+                        {
+                            _BirdVerticalSpeed = 0;
+                            _Bird.PositionY = ScreenHeight / 2;
+                        }
+                    }
+                    break;
+
+
+                case GameState.Start:
+                    {
+                        // Update the motion of the bird
+                        if (Keyboard.GetState().IsKeyDown(Keys.Space)) _BirdVerticalSpeed = 400;
+                        else _BirdVerticalSpeed += -_Gravity * gameTime.ElapsedGameTime.Milliseconds / 1000;
+                        _Bird.PositionY += _BirdVerticalSpeed * gameTime.ElapsedGameTime.Milliseconds / 1000;
+                        if (_Bird.PositionY < Floor.Height)
+                        {
+                            _Bird.PositionY = Floor.Height;
+                            _BirdVerticalSpeed = 0;
+                        }
+                        if (_Bird.PositionY > ScreenHeight)
+                        {
+                            _Bird.PositionY = ScreenHeight;
+                            _BirdVerticalSpeed = 0;
+                        }
+
+                        // Update the pipe positions and maintain the pipe list
+                        foreach (Pipe pipe in _Pipes)
+                        {
+                            pipe.PositionX -= _SceneSpeed * gameTime.ElapsedGameTime.Milliseconds / 1000;
+                        }
+                        _MaintainPipes();
+                    }
+                    break;
+
+
+                case GameState.GameOver:
+                    { }
+                    break;
             }
-            _MaintainPipes();
         }
 
         /// <summary>
@@ -224,6 +339,11 @@ namespace FlappyBird
             // Draw the base class
             base.Draw(gameTime);
 
+            // Draw the background
+            _SpriteBatch.Begin();
+            _SpriteBatch.Draw(_Background, new Rectangle(0, 0, ScreenWidth, ScreenHeight), Color.White);
+            _SpriteBatch.End();
+
             // Draw the bird
             _Bird.Draw(_SpriteBatch);
 
@@ -231,6 +351,20 @@ namespace FlappyBird
             foreach (Pipe pipe in _Pipes)
             {
                 pipe.Draw(_SpriteBatch);
+            }
+
+            // Draw the floors
+            foreach (Floor floor in _Floors)
+            {
+                floor.Draw(_SpriteBatch);
+            }
+
+            // Draw the ready cover
+            if(_GameState == GameState.Ready)
+            {
+                _SpriteBatch.Begin();
+                _SpriteBatch.Draw(_ReadyCover, new Rectangle(0, 0, ScreenWidth, ScreenHeight), Color.White);
+                _SpriteBatch.End();
             }
         }
     }

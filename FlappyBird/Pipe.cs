@@ -17,6 +17,8 @@ namespace FlappyBird
         protected int _Texture_Body_Height = 1;
         protected int _Texture_End_Height = 35;
 
+        protected int _FloorHeight = 0;
+        
         protected int _PositionX = 0;
 
         protected int _OpeningAltitude = 0;
@@ -42,6 +44,15 @@ namespace FlappyBird
         }
 
         /// <summary>
+        /// Get or set the floor height the pipe bases.
+        /// </summary>
+        public int FloorHeight
+        {
+            get { return _FloorHeight; }
+            set { _FloorHeight = (value < 0) ? 0 : value; }
+        }
+
+        /// <summary>
         /// Get or set x-axis position of the pipe.
         /// </summary>
         public int PositionX
@@ -63,7 +74,7 @@ namespace FlappyBird
         /// </summary>
         public int OpeningMinAltitude
         {
-            get { return 40 + OpeningSize / 2; }
+            get { return 40 + OpeningSize / 2 + _FloorHeight; }
         }
 
         /// <summary>
@@ -71,7 +82,7 @@ namespace FlappyBird
         /// </summary>
         public int OpeningMaxAltitude
         {
-            get { return ((FlappyBird)base.Game).ScreenHeight - OpeningMinAltitude; }
+            get { return ((FlappyBird)base.Game).ScreenHeight - OpeningMinAltitude + _FloorHeight; }
         }
 
         /// <summary>
@@ -100,7 +111,8 @@ namespace FlappyBird
         public Pipe(Game game)
             : base(game)
         {
-            ;
+            _PipeNumber = 0;
+            _FloorHeight = 0;
         }
 
         /// <summary>
@@ -108,11 +120,14 @@ namespace FlappyBird
         /// </summary>
         /// <param name="game">The game that contains this object.</param>
         /// <param name="pipeNumber">The number of the pipe.</param>
-        public Pipe(Game game, int pipeNumber)
+        public Pipe(Game game, int pipeNumber, int floorHeight)
             : base(game)
         {
             // Set the pipe number
             _PipeNumber = pipeNumber;
+
+            // Set the floor height
+            _FloorHeight = floorHeight;
         }
 
         /// <summary>
