@@ -29,7 +29,7 @@ namespace BmFont
         private Dictionary<char, FontChar> _characterMap;
         private FontFile _fontFile;
         private Texture2D _texture;
-        public int DrawText(SpriteBatch spriteBatch, int x, int y, string text)
+        public int DrawText(SpriteBatch spriteBatch, int x, int y, string text, Color color)
         {
             int dx = x;
             int dy = y;
@@ -41,7 +41,7 @@ namespace BmFont
                     var sourceRectangle = new Rectangle(fc.X, fc.Y, fc.Width, fc.Height);
                     var position = new Vector2(dx + fc.XOffset, dy + fc.YOffset);
                     spriteBatch.Begin();
-                    spriteBatch.Draw(_texture, position, sourceRectangle, Color.White);
+                    spriteBatch.Draw(_texture, position, sourceRectangle, color);
                     spriteBatch.End();
                     dx += fc.XAdvance;
                 }

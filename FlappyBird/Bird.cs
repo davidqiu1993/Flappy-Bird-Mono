@@ -23,7 +23,7 @@ namespace FlappyBird
         /// </summary>
         static public int Width
         {
-            get { return 80; }
+            get { return 42; }
         }
 
         /// <summary>
@@ -31,7 +31,7 @@ namespace FlappyBird
         /// </summary>
         static public int Height
         {
-            get { return 60; }
+            get { return 32; }
         }
 
         /// <summary>

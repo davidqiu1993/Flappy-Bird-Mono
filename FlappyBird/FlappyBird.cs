@@ -31,6 +31,10 @@ namespace FlappyBird
         protected SpriteBatch _SpriteBatch = null;
         protected Texture2D _Background = null;
         protected Texture2D _ReadyCover = null;
+        protected Texture2D _GameoverCover = null;
+        protected FontFile _TipsFontFile = null;
+        protected Texture2D _TipsFontTexture = null;
+        protected FontRenderer _TipsFontRenderer = null;
         protected Random _Random = null;
 
         protected int _Score = 0;
@@ -163,11 +167,36 @@ namespace FlappyBird
         /// </summary>
         protected void _UpdateScore()
         {
+            // Check score update
             for (int i = 0; i < _Pipes.Count; ++i)
             {
                 if (_Pipes[i].PositionX < _Bird.PositionX && _Pipes[i].PipeNumber + 1 > _Score)
                 {
                     _Score = _Pipes[i].PipeNumber + 1;
+                }
+            }
+
+            // Check collision with the floor
+            if (_Bird.PositionY < Floor.Height + Bird.Height / 2)
+            {
+                _GameState = GameState.GameOver;
+            }
+
+            // Check collision with the pipes
+            for (int i = 0; i < _Pipes.Count; ++i)
+            {
+                // Check x-axis collision
+                if ((_Bird.PositionX + Bird.Width / 2 > _Pipes[i].PositionX - Pipe.Width / 2 &&
+                     _Bird.PositionX + Bird.Width / 2 < _Pipes[i].PositionX + Pipe.Width / 2) ||
+                    (_Bird.PositionX - Bird.Width / 2 < _Pipes[i].PositionX + Pipe.Width / 2 &&
+                     _Bird.PositionX - Bird.Width / 2 > _Pipes[i].PositionX - Pipe.Width / 2))
+                {
+                    // Check y-axis collision
+                    if (_Bird.PositionY + Bird.Height / 2 > _Pipes[i].OpeningAltitude + Pipe.OpeningSize / 2 ||
+                        _Bird.PositionY - Bird.Height / 2 < _Pipes[i].OpeningAltitude - Pipe.OpeningSize / 2)
+                    {
+                        _GameState = GameState.GameOver;
+                    }
                 }
             }
         }
@@ -252,11 +281,17 @@ namespace FlappyBird
             // Load the textures of the main scene
             _Background = this.Content.Load<Texture2D>("background");
             _ReadyCover = this.Content.Load<Texture2D>("ready");
+            _GameoverCover = this.Content.Load<Texture2D>("gameover");
 
             // Load the score font
             _ScoreFontFile = FontLoader.Load(Path.Combine(this.Content.RootDirectory, "score_font.fnt"));
             _ScoreFontTexture = this.Content.Load<Texture2D>("score_font_0");
             _ScoreFontRenderer = new FontRenderer(_ScoreFontFile, _ScoreFontTexture);
+
+            // Load the tips font
+            _TipsFontFile = FontLoader.Load(Path.Combine(this.Content.RootDirectory, "tips_font.fnt"));
+            _TipsFontTexture = this.Content.Load<Texture2D>("tips_font_0");
+            _TipsFontRenderer = new FontRenderer(_TipsFontFile, _TipsFontTexture);
         }
 
         /// <summary>
@@ -285,28 +320,22 @@ namespace FlappyBird
             // Update game components
             _Bird.Update(gameTime);
 
-            // Update the floor positions and maintain the floor list
-            foreach (Floor floor in _Floors)
-            {
-                floor.PositionX -= _SceneSpeed * gameTime.ElapsedGameTime.Milliseconds / 1000;
-            }
-            _MaintainFloors();
-
 
             // Check the game state
             switch (_GameState)
             {
                 case GameState.Ready:
                     {
+                        // Update the floor positions and maintain the floor list
+                        foreach (Floor floor in _Floors)
+                        {
+                            floor.PositionX -= _SceneSpeed * gameTime.ElapsedGameTime.Milliseconds / 1000;
+                        }
+                        _MaintainFloors();
+
+                        // Check if game starts
                         if (Keyboard.GetState().IsKeyDown(Keys.Space))
                         {
-                            // Reset the pipes
-                            _Pipes.Clear();
-                            _Pipes.Add(new Pipe(this, 0, Floor.Height));
-                            _Pipes[0].Initialize();
-                            _Pipes[0].PositionX = ScreenWidth + Pipe.Width + 200;
-                            _Pipes[0].OpeningAltitude = _Random.Next(_Pipes[0].OpeningMinAltitude, _Pipes[0].OpeningMaxAltitude);
-
                             // Reset the score
                             _Score = 0;
 
@@ -327,6 +356,13 @@ namespace FlappyBird
 
                 case GameState.Start:
                     {
+                        // Update the floor positions and maintain the floor list
+                        foreach (Floor floor in _Floors)
+                        {
+                            floor.PositionX -= _SceneSpeed * gameTime.ElapsedGameTime.Milliseconds / 1000;
+                        }
+                        _MaintainFloors();
+
                         // Update the motion of the bird
                         if (Keyboard.GetState().IsKeyDown(Keys.Space)) _BirdVerticalSpeed = 400;
                         else _BirdVerticalSpeed += -_Gravity * gameTime.ElapsedGameTime.Milliseconds / 1000;
@@ -356,7 +392,35 @@ namespace FlappyBird
 
 
                 case GameState.GameOver:
-                    { }
+                    {
+                        // Check if game gets ready
+                        if (Keyboard.GetState().IsKeyDown(Keys.Enter))
+                        {
+                            // Reset the pipes
+                            _Pipes.Clear();
+                            _Pipes.Add(new Pipe(this, 0, Floor.Height));
+                            _Pipes[0].Initialize();
+                            _Pipes[0].PositionX = ScreenWidth + Pipe.Width + 200;
+                            _Pipes[0].OpeningAltitude = _Random.Next(_Pipes[0].OpeningMinAltitude, _Pipes[0].OpeningMaxAltitude);
+
+                            // Switch the game state to ready
+                            _GameState = GameState.Ready;
+                        }
+
+                        // Update the motion of the bird
+                        _BirdVerticalSpeed += -_Gravity * gameTime.ElapsedGameTime.Milliseconds / 1000;
+                        _Bird.PositionY += _BirdVerticalSpeed * gameTime.ElapsedGameTime.Milliseconds / 1000;
+                        if (_Bird.PositionY < Floor.Height)
+                        {
+                            _Bird.PositionY = Floor.Height;
+                            _BirdVerticalSpeed = 0;
+                        }
+                        if (_Bird.PositionY > ScreenHeight)
+                        {
+                            _Bird.PositionY = ScreenHeight;
+                            _BirdVerticalSpeed = 0;
+                        }
+                    }
                     break;
             }
         }
@@ -399,22 +463,36 @@ namespace FlappyBird
             {
                 case GameState.Ready:
                     {
+                        // Draw the ready cover
                         _SpriteBatch.Begin();
                         _SpriteBatch.Draw(_ReadyCover, new Rectangle(0, 0, ScreenWidth, ScreenHeight), Color.White);
                         _SpriteBatch.End();
+
+                        // Draw the tips
+                        _TipsFontRenderer.DrawText(_SpriteBatch, 10, ScreenHeight - 50, "Press [Space] to start...", Color.Black);
                     }
                     break;
 
 
                 case GameState.Start:
                     {
-                        _ScoreFontWidth = _ScoreFontRenderer.DrawText(_SpriteBatch, ScreenWidth / 2 - _ScoreFontWidth / 2, 80, _Score.ToString());
+                        // Draw the score
+                        _ScoreFontWidth = _ScoreFontRenderer.DrawText(_SpriteBatch, ScreenWidth / 2 - _ScoreFontWidth / 2, 80, _Score.ToString(),Color.White);
                     }
                     break;
 
 
                 case GameState.GameOver:
-                    { }
+                    {
+                        // Draw the game over cover
+                        _SpriteBatch.Begin();
+                        _SpriteBatch.Draw(_GameoverCover, new Rectangle(0, 0, ScreenWidth, ScreenHeight), Color.White);
+                        _SpriteBatch.End();
+                        _ScoreFontWidth = _ScoreFontRenderer.DrawText(_SpriteBatch, 300 - _ScoreFontWidth, 250, _Score.ToString(), Color.White);
+
+                        // Draw the tips
+                        _TipsFontRenderer.DrawText(_SpriteBatch, 10, ScreenHeight - 50, "Press [Enter] to get ready...", Color.Black);
+                    }
                     break;
             }
         }
