@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -6,13 +7,14 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Storage;
 using Microsoft.Xna.Framework.GamerServices;
+using BmFont;
 
 namespace FlappyBird
 {
     /// <summary>
     /// The state of the game.
     /// </summary>
-    public enum GameState 
+    public enum GameState
     {
         Ready = 0,
         Start = 1,
@@ -32,8 +34,12 @@ namespace FlappyBird
         protected Random _Random = null;
 
         protected int _Score = 0;
-        protected GameState _GameState = GameState.Ready;
+        protected FontFile _ScoreFontFile = null;
+        protected Texture2D _ScoreFontTexture = null;
+        protected FontRenderer _ScoreFontRenderer = null;
+        protected int _ScoreFontWidth = 0;
 
+        protected GameState _GameState = GameState.Ready;
         protected int _Gravity = 1500;
         protected int _SceneSpeed = 160;
 
@@ -225,7 +231,7 @@ namespace FlappyBird
 
             // Initialize the pipe maintaining state
             _PipesMaintaining = false;
-            
+
             // Initialize the floors
             _FloorsMaintaining = false;
             _MaintainFloors();
@@ -246,6 +252,11 @@ namespace FlappyBird
             // Load the textures of the main scene
             _Background = this.Content.Load<Texture2D>("background");
             _ReadyCover = this.Content.Load<Texture2D>("ready");
+
+            // Load the score font
+            _ScoreFontFile = FontLoader.Load(Path.Combine(this.Content.RootDirectory, "score_font.fnt"));
+            _ScoreFontTexture = this.Content.Load<Texture2D>("score_font_0");
+            _ScoreFontRenderer = new FontRenderer(_ScoreFontFile, _ScoreFontTexture);
         }
 
         /// <summary>
@@ -283,7 +294,7 @@ namespace FlappyBird
 
 
             // Check the game state
-            switch(_GameState)
+            switch (_GameState)
             {
                 case GameState.Ready:
                     {
@@ -337,6 +348,9 @@ namespace FlappyBird
                             pipe.PositionX -= _SceneSpeed * gameTime.ElapsedGameTime.Milliseconds / 1000;
                         }
                         _MaintainPipes();
+
+                        // Update the score and check if game over
+                        _UpdateScore();
                     }
                     break;
 
@@ -379,12 +393,29 @@ namespace FlappyBird
                 floor.Draw(_SpriteBatch);
             }
 
-            // Draw the ready cover
-            if(_GameState == GameState.Ready)
+            
+            // Check the game state
+            switch (_GameState)
             {
-                _SpriteBatch.Begin();
-                _SpriteBatch.Draw(_ReadyCover, new Rectangle(0, 0, ScreenWidth, ScreenHeight), Color.White);
-                _SpriteBatch.End();
+                case GameState.Ready:
+                    {
+                        _SpriteBatch.Begin();
+                        _SpriteBatch.Draw(_ReadyCover, new Rectangle(0, 0, ScreenWidth, ScreenHeight), Color.White);
+                        _SpriteBatch.End();
+                    }
+                    break;
+
+
+                case GameState.Start:
+                    {
+                        _ScoreFontWidth = _ScoreFontRenderer.DrawText(_SpriteBatch, ScreenWidth / 2 - _ScoreFontWidth / 2, 80, _Score.ToString());
+                    }
+                    break;
+
+
+                case GameState.GameOver:
+                    { }
+                    break;
             }
         }
     }

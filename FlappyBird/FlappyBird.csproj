@@ -36,6 +36,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Bird.cs" />
+    <Compile Include="BmFontRenderer.cs" />
+    <Compile Include="BmFontXmlSerializer.cs" />
     <Compile Include="FlappyBird.cs" />
     <Compile Include="Floor.cs" />
     <Compile Include="Pipe.cs" />
@@ -57,9 +59,12 @@
     <Content Include="Content\pipe_end_downward.png" />
     <Content Include="Content\pipe_end_upward.png" />
     <Content Include="Content\ready.png" />
+    <Content Include="Content\score_font_0.png" />
     <Content Include="Icon.ico" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <None Include="Content\score_font.fnt" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
