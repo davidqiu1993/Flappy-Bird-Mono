@@ -5,9 +5,6 @@ the source code to compile and run in your own computer. What should be noticed 
 this implementation only includes Windows version, and the Visual Studio version used to 
 develop this project is Visual Studio 2013. The program has been tested in Windows 8.1.
 
-You can download the precompiled version here:
-- http://pro.ss.sysu.edu.cn:1695/GetFile.aspx?File=/Sharing/FlappyBirdMono.zip
-
 
 ##Functionality Description
 - 1. Complete game logic display;
